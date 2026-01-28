@@ -150,13 +150,64 @@ The Chief of Staff agent can read this for cross-project awareness.
 | Portfolio state | `~/business/.claude/state/portfolio.md` |
 | Init script | `~/.claude/plugins/solo-founder-fleet/scripts/init-project-state.sh` |
 
+## Syncing Agent Changes
+
+Agents are deployed from the plugin repo to `~/.claude/agents/`. When you improve agents while working, those changes live in the deployed location. Use the sync tools to pull changes back to source.
+
+### Quick Commands
+
+```bash
+# Check sync status
+~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh status
+
+# View diffs
+~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh diff
+
+# Pull deployed changes to source
+~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh pull
+
+# Push source changes to deployed
+~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh push
+```
+
+### Using the Skill
+
+```
+/sync-agents
+```
+
+This runs an interactive sync check that:
+1. Shows status of all agents
+2. Displays diffs for changed files
+3. Offers to pull changes back to source
+4. Helps commit changes to git
+
+### Weekly Sync Workflow
+
+1. Run `/sync-agents` or `sync-agents.sh status`
+2. Review any diffs (deployed changes are improvements made while working)
+3. Pull changes you want to preserve
+4. Commit to the plugin repo
+5. Push source changes if needed
+
+### Status Meanings
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| IN SYNC | Files identical | None needed |
+| SOURCE NEWER | Repo has newer changes | `push` to deploy |
+| DEPLOYED NEWER | Working copy has changes | `pull` to preserve |
+| NOT DEPLOYED | Only in source | `push` to deploy |
+| DEPLOYED ONLY | Only in ~/.claude/agents | `pull` to add to repo |
+
 ## Iteration Notes
 
 To modify agents:
 1. Edit files in `~/.claude/plugins/solo-founder-fleet/agents/`
-2. Copy updated files to `~/.claude/agents/`
+2. Run `sync-agents.sh push` to deploy
 3. Restart Claude Code
 
+Or use the quick deploy:
 ```bash
 cp ~/.claude/plugins/solo-founder-fleet/agents/*.md ~/.claude/agents/
 ```
