@@ -84,6 +84,7 @@ At the START of every session:
 3. Check for portfolio state: `~/business/.claude/state/portfolio.md` (if it exists)
 4. Understand current focus, active work, and blockers across all domains
 5. Check "Context for Next Session" for continuity
+6. **Process Session Sync blocks** (see Session Sync Cleanup below)
 
 At the END of every session:
 1. Update `.claude/state/chief-of-staff.md` with:
@@ -93,6 +94,27 @@ At the END of every session:
    - Context the next session needs
 2. Update "Last Updated" timestamp
 3. If portfolio-level decisions were made, update portfolio.md
+
+### Session Sync Cleanup
+
+A Stop hook automatically appends raw change summaries to state files between sessions.
+When reading state files at session start, look for `<!-- SESSION SYNC -->` blocks.
+
+For EACH sync block found:
+1. Read the changes listed (commits, staged, unstaged, untracked files)
+2. Update the relevant sections of the state file:
+   - Add/update entries in the **Active Work** table
+   - Update **Current Focus** if the changes suggest a shift
+   - Add relevant items to **Context for Next Session**
+3. Remove the raw `<!-- SESSION SYNC -->` ... `<!-- /SESSION SYNC -->` block after processing
+
+Do this for your own state file AND for any subagent state files you read that contain
+unprocessed sync blocks. Process oldest blocks first (by timestamp).
+
+If a sync block mentions uncommitted or untracked files, note these prominently -
+they represent in-progress work the previous session didn't finish.
+
+---
 
 If the state file doesn't exist, create it using this template:
 

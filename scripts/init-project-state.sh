@@ -43,4 +43,15 @@ EOF
   fi
 done
 
+# Ensure .last-sync-sha is gitignored
+GITIGNORE="$PROJECT_DIR/.gitignore"
+if [ -f "$GITIGNORE" ]; then
+  if ! grep -q ".claude/state/.last-sync-sha" "$GITIGNORE"; then
+    echo "" >> "$GITIGNORE"
+    echo "# Session sync marker (auto-generated)" >> "$GITIGNORE"
+    echo ".claude/state/.last-sync-sha" >> "$GITIGNORE"
+    echo "Added .last-sync-sha to .gitignore"
+  fi
+fi
+
 echo "State initialized for $PROJECT_NAME"

@@ -119,6 +119,49 @@ Run the init script for new projects:
 
 Creates all 7 state files with default templates.
 
+## Session Sync Hook
+
+State files are automatically updated between sessions by a Stop hook that captures git changes.
+
+### How It Works
+
+1. When any Claude Code session ends, `scripts/session-sync.sh` runs automatically
+2. The script compares the current git state against a marker file (`.claude/state/.last-sync-sha`)
+3. It collects changes across three layers:
+   - **Commits** since last sync
+   - **Staged** but uncommitted changes
+   - **Unstaged modifications** and **untracked files**
+4. Changes are routed to relevant agent state files based on file path patterns
+5. A raw `<!-- SESSION SYNC -->` block is appended to each affected state file
+6. The Chief of Staff always receives all changes; sub-agents only receive domain-relevant changes
+
+### Domain Routing
+
+File paths are mapped to agents:
+
+| Pattern | Agent |
+|---------|-------|
+| `src/`, `lib/`, `*.ts`, `*.py`, etc. | eng |
+| `tests/`, `*.test.*`, `*.spec.*` | qa |
+| `.github/workflows/`, `Dockerfile`, `deploy/` | devops |
+| `docs/` | content |
+| `public/`, `assets/`, `*.css` | design |
+
+Files not matching any pattern are only reported to the Chief of Staff.
+
+### Cleanup
+
+The Chief of Staff processes raw sync blocks at session start:
+1. Reads the changes in each `<!-- SESSION SYNC -->` block
+2. Updates structured state sections (Active Work, Current Focus, etc.)
+3. Removes the raw block after processing
+
+Multiple sync blocks can accumulate between Chief of Staff sessions - they are processed oldest-first.
+
+### Marker File
+
+`.claude/state/.last-sync-sha` tracks the last-synced commit. It should be gitignored (the init script handles this automatically). If the marker is missing, the hook creates it at current HEAD.
+
 ## Best Practices
 
 1. **Be specific in "Context for Next Session"** - Include file paths, variable names, specific decisions

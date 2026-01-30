@@ -9,7 +9,9 @@
       "Bash(gh repo create:*)",
       "Bash(tree:*)",
       "Bash(chmod:*)",
-      "Bash(~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh:*)"
+      "Bash(~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh:*)",
+      "Bash(~/.claude/plugins/solo-founder-fleet/scripts/session-sync.sh:*)",
+      "Bash(git -C /Users/justuseapen/.claude/plugins/solo-founder-fleet add:*)"
     ]
   }
 }
