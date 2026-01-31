@@ -11,7 +11,7 @@
       "Bash(chmod:*)",
       "Bash(~/.claude/plugins/solo-founder-fleet/scripts/sync-agents.sh:*)",
       "Bash(~/.claude/plugins/solo-founder-fleet/scripts/session-sync.sh:*)",
-      "Bash(git -C /Users/justuseapen/.claude/plugins/solo-founder-fleet add:*)"
+      "Bash(git -C /Users/justuseapen/.claude/plugins/solo-founder-fleet add scripts/session-sync.sh scripts/init-project-state.sh .claude/settings.local.json)"
     ]
   }
 }

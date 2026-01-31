@@ -52,6 +52,7 @@ STATE_DIR=".claude/state"
 [ -d "$STATE_DIR" ] || exit 0
 
 MARKER_FILE="$STATE_DIR/.last-sync-sha"
+FINGERPRINT_FILE="$STATE_DIR/.last-sync-fingerprint"
 CURRENT_SHA=$(git rev-parse HEAD)
 
 # --- Collect changes ---
@@ -87,14 +88,30 @@ STAGED=$(git diff --cached --stat 2>/dev/null | head -n "$MAX_FILES_PER_LAYER")
 # Layer 3: Unstaged modifications
 UNSTAGED=$(git diff --stat 2>/dev/null | head -n "$MAX_FILES_PER_LAYER")
 
-# Layer 3b: Untracked files
-UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null | head -n "$MAX_FILES_PER_LAYER")
-UNTRACKED_COUNT=$(git ls-files --others --exclude-standard 2>/dev/null | wc -l | tr -d ' ')
+# Layer 3b: Untracked files (exclude sync marker files)
+UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null | grep -v '^\.claude/state/\.last-sync-' | head -n "$MAX_FILES_PER_LAYER")
+UNTRACKED_COUNT=$(git ls-files --others --exclude-standard 2>/dev/null | grep -v '^\.claude/state/\.last-sync-' | wc -l | tr -d ' ')
 
 # If nothing changed, just update marker and exit
 if [ -z "$COMMITS" ] && [ -z "$STAGED" ] && [ -z "$UNSTAGED" ] && [ -z "$UNTRACKED" ]; then
   echo "$CURRENT_SHA" > "$MARKER_FILE"
   exit 0
+fi
+
+# --- Dedup check ---
+# Fingerprint uses stable content: commit log, file names (not stats which change as
+# state files are appended to), and the current HEAD SHA to detect new commits.
+STAGED_NAMES=$(git diff --cached --name-only 2>/dev/null || true)
+UNSTAGED_NAMES=$(git diff --name-only 2>/dev/null || true)
+CONTENT_FINGERPRINT=$(printf '%s\n%s\n%s\n%s\n%s' "$CURRENT_SHA" "$COMMITS" "$STAGED_NAMES" "$UNSTAGED_NAMES" "$UNTRACKED" | shasum -a 256 | cut -d' ' -f1)
+
+if [ -f "$FINGERPRINT_FILE" ]; then
+  LAST_FINGERPRINT=$(cat "$FINGERPRINT_FILE")
+  if [ "$CONTENT_FINGERPRINT" = "$LAST_FINGERPRINT" ]; then
+    # Identical changes already recorded - just update marker and exit
+    echo "$CURRENT_SHA" > "$MARKER_FILE"
+    exit 0
+  fi
 fi
 
 # --- Build sync block ---
@@ -168,7 +185,7 @@ fi
 
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
 UNSTAGED_FILES=$(git diff --name-only 2>/dev/null || true)
-UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null || true)
+UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null | grep -v '^\.claude/state/\.last-sync-' || true)
 
 ALL_FILES+="${STAGED_FILES}"$'\n'
 ALL_FILES+="${UNSTAGED_FILES}"$'\n'
@@ -209,6 +226,7 @@ for agent in "${!AFFECTED_DOMAINS[@]}"; do
   fi
 done
 
-# --- Update marker ---
+# --- Update marker and fingerprint ---
 
 echo "$CURRENT_SHA" > "$MARKER_FILE"
+echo "$CONTENT_FINGERPRINT" > "$FINGERPRINT_FILE"

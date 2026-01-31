@@ -48,8 +48,9 @@ GITIGNORE="$PROJECT_DIR/.gitignore"
 if [ -f "$GITIGNORE" ]; then
   if ! grep -q ".claude/state/.last-sync-sha" "$GITIGNORE"; then
     echo "" >> "$GITIGNORE"
-    echo "# Session sync marker (auto-generated)" >> "$GITIGNORE"
+    echo "# Session sync markers (auto-generated)" >> "$GITIGNORE"
     echo ".claude/state/.last-sync-sha" >> "$GITIGNORE"
+    echo ".claude/state/.last-sync-fingerprint" >> "$GITIGNORE"
     echo "Added .last-sync-sha to .gitignore"
   fi
 fi
